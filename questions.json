@@ -1,0 +1,26 @@
+[
+  {
+    "text": "What is the salary range?",
+    "type": "numeric",
+    "filter": {
+      "operator": "None",
+      "value": 0
+    },
+    "shortened": "Salary Range"
+  },
+  {
+    "text": "Is remote work available?",
+    "type": "boolean",
+    "filter": "None",
+    "shortened": "Remote Work Availability"
+  },
+  {
+    "text": "What is the employee count",
+    "type": "numeric",
+    "filter": {
+      "operator": "None",
+      "value": 0
+    },
+    "shortened": "Employee Count"
+  }
+]

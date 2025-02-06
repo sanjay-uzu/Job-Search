@@ -2,7 +2,8 @@ import requests
 from selectolax.parser import HTMLParser
 def get_html(url):
     headers = {
-        'User-Agent': 'Chrome/125.0.0.0 (Windows NT 10.0; Win64 x64) AppleWebKit/537.36 (KHTML, like Gecko)'
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
     }
     try:
         response = requests.get(url, headers=headers, timeout=15)
@@ -32,4 +33,7 @@ def extract_main_content(html):
 
 def get_content(url):
     html=get_html(url)
+    if html==None:
+        return None
     return extract_main_content(html)
+

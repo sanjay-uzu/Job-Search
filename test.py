@@ -1,5 +1,3 @@
-from search import get_search
+from backend import shorten_question
 
-query = "What is prompt engineering?"
-results = get_search(query=query, max_results=101)  
-print(len(results))
+print(shorten_question("What is the experience required"))

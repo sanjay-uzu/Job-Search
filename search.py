@@ -21,12 +21,16 @@ def get_search(query: str = "", max_results: int = 1):
     
     search = GoogleSearchAPIWrapper()
     all_results = []
-    num_per_request = 10  # Max allowed by API
+    num_per_request = 1 # Max allowed by API
+
     for start in range(1, max_results + 1, num_per_request):
-        results = search.results(query=query, num_results=num_per_request, search_params={"start": start})
-        all_results.extend(results)
-        if len(results) < num_per_request:
-            break
+        try:
+            results = search.results(query=query, num_results=num_per_request, search_params={"start": start})
+            all_results.extend(results)
+            if len(results) < num_per_request:
+                break
+        except:
+            pass
     
     return all_results
 
