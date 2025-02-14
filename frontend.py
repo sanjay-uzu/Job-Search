@@ -98,14 +98,13 @@ with st.sidebar:
             type="pdf",
             key="resume_upload"
         )
+        # Resume upload section
         if resume_file:
             with st.spinner("Processing resume..."):
                 resume_text = extract_text_from_pdf(resume_file)
                 if resume_text:
-                    st.session_state.resume_vector = get_embeddings(resume_text)
+                    st.session_state.resume_vectorstore = create_resume_vectorstore(resume_text)
                     st.success("Resume processed successfully!")
-                else:
-                    st.error("Could not read resume content")
                     
 if 'results_df' in st.session_state and st.session_state.results_df is not None:
     print("DataFrame Columns:", st.session_state.results_df.columns)
@@ -155,20 +154,20 @@ if st.session_state.page == 'main':
                     
                     # Results processing
                     if query_results:
+                        job_descriptions = [job['raw_content'] for job in query_results]
+                        jobs_vectorstore = create_jobs_vectorstore(job_descriptions)
+                        
+                        conversation_chain = get_conversation_chain(jobs_vectorstore)
                         results = []
                         for result in query_results:
                             row = {'Job Link': result['link']}
                             
                             # Add resume match column if resume exists
-                            if st.session_state.resume_vector is not None:
-
-                                job_content = ' '.join(result['answers'])  # Or use raw job description
-                                job_vector = get_embeddings(job_content)
-                                similarity = cosine_similarity(
-                                    [st.session_state.resume_vector],
-                                    [job_vector]
-                                )[0][0]
-                                row['Resume Match'] = similarity > 0.65  # Adjust threshold as needed
+                            if 'resume_vectorstore' in st.session_state:
+                                        response = conversation_chain({
+                                            'question': f"Does this resume match the job: {result['raw_content']}?"
+                                        })
+                                        row['Match'] = "True" if "yes" in response['answer'].lower() else "False"
                             
                             for i, answer in enumerate(result['answers']):
                                 row[column_headers[i]] = answer
@@ -192,11 +191,11 @@ if st.session_state.search_triggered:
             
             df['Job Link'] = df['Job Link'].apply(make_clickable)
         # In results display
-        if 'Resume Match' in df.columns:
-            df['Resume Match'] = df['Resume Match'].map({
-                True: '✅ Match',
-                False: '❌ No Match'
-            })
+        # In display section
+        if 'Match' in df.columns:
+            df['Match'] = df['Match'].apply(
+                lambda x: '✅ Match' if x == "True" else '❌ No Match'
+            )
 
 
         

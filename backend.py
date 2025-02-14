@@ -7,6 +7,36 @@ from langchain.chat_models import ChatOpenAI  # Updated import
 from langchain.prompts import ChatPromptTemplate  # New prompt template
 import json
 from langchain.prompts import ChatPromptTemplate
+from langchain.vectorstores import FAISS
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+
+# Initialize embeddings
+embeddings = OpenAIEmbeddings()
+
+def create_resume_vectorstore(resume_text):
+    """Create vector store from resume text"""
+    return FAISS.from_texts([resume_text], embeddings)
+
+def create_jobs_vectorstore(job_descriptions):
+    """Create vector store from job descriptions"""
+    return FAISS.from_texts(job_descriptions, embeddings)
+
+def get_conversation_chain(vectorstore):
+    """Create conversation chain with memory"""
+    llm = ChatOpenAI(temperature=0.7, model="gpt-4")
+    memory = ConversationBufferMemory(
+        memory_key='chat_history', 
+        return_messages=True
+    )
+    return ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        chain_type="stuff",
+        retriever=vectorstore.as_retriever(),
+        memory=memory
+    )
+
 
 # Add this with other prompt templates
 shorten_prompt = ChatPromptTemplate.from_messages([
