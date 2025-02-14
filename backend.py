@@ -125,25 +125,28 @@ def process_jobs(query,max_results):
 
         results = get_search(query=query, max_results=max_results)
         
-        r=[]
-        for result in results:
-            if result["link"]==None:
-                print("none here")
-                continue
-            r.append(result)
-        results=r
+        # r=[]
+        # for result in results:
+        #     if result["link"]==None:
+        #         print("none here")
+        #         continue
+        #     r.append(result)
+        # results=r
         # Extract content from each result link
         contents = [(result["link"], get_content(result["link"])) for result in results]
         
         chain = LLMChain(llm=llm, prompt=template)
     
         processed_results = []
-
         for link, content in contents:
-        
-            if content==None:
+            if content is None:
                 continue
-            job_dict = {"link": link, "answers": []}
+                
+            job_dict = {
+                "link": link,
+                "answers": [],
+                "raw_content": content[:15000]  # Keep original content for matching
+            }
             
             
             for question in questions:

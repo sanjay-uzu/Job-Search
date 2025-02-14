@@ -4,6 +4,9 @@ import pandas as pd
 from pathlib import Path
 from backend import *
 import logging
+from utils import extract_text_from_pdf, get_embeddings
+from sklearn.metrics.pairwise import cosine_similarity
+
 # Page configuration
 st.set_page_config(page_title="Job Search Assistant", layout="wide")
 logging.basicConfig(level=logging.INFO)
@@ -61,7 +64,15 @@ with st.sidebar:
         st.session_state.page = 'main'
     if st.button("❓ Questions Manager", use_container_width=True):
         st.session_state.page = 'questions'
-    
+    # In Settings/Filters section
+    st.session_state.match_threshold = st.slider(
+        "Resume Match Threshold",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.65,
+        step=0.05
+    )
+
     if st.session_state.page == 'main':
         with st.expander("🔧 Settings/Filters", expanded=True):
             st.session_state.max_results = st.slider("Max Results", 1, 100, 1)
@@ -75,6 +86,27 @@ with st.sidebar:
             )
 
 # ========== MAIN CONTENT ==========
+# Add to session state initialization
+if 'resume_vector' not in st.session_state:
+    st.session_state.resume_vector = None
+
+# Add resume uploader to sidebar
+with st.sidebar:
+    with st.expander("📄 Upload Resume", expanded=True):
+        resume_file = st.file_uploader(
+            "Upload your resume (PDF)",
+            type="pdf",
+            key="resume_upload"
+        )
+        if resume_file:
+            with st.spinner("Processing resume..."):
+                resume_text = extract_text_from_pdf(resume_file)
+                if resume_text:
+                    st.session_state.resume_vector = get_embeddings(resume_text)
+                    st.success("Resume processed successfully!")
+                else:
+                    st.error("Could not read resume content")
+                    
 if 'results_df' in st.session_state and st.session_state.results_df is not None:
     print("DataFrame Columns:", st.session_state.results_df.columns)
 
@@ -121,14 +153,25 @@ if st.session_state.page == 'main':
                         filtered_results = apply_filters(raw_results, st.session_state.questions)
                         query_results.extend(filtered_results)
                     
+                    # Results processing
                     if query_results:
                         results = []
                         for result in query_results:
                             row = {'Job Link': result['link']}
-                           
+                            
+                            # Add resume match column if resume exists
+                            if st.session_state.resume_vector is not None:
+
+                                job_content = ' '.join(result['answers'])  # Or use raw job description
+                                job_vector = get_embeddings(job_content)
+                                similarity = cosine_similarity(
+                                    [st.session_state.resume_vector],
+                                    [job_vector]
+                                )[0][0]
+                                row['Resume Match'] = similarity > 0.65  # Adjust threshold as needed
+                            
                             for i, answer in enumerate(result['answers']):
-                                row[column_headers[i]]= answer
-                                
+                                row[column_headers[i]] = answer
                             results.append(row)
                         st.session_state.results_df = pd.DataFrame(results)
                     else:
@@ -140,7 +183,7 @@ if st.session_state.page == 'main':
 if st.session_state.search_triggered:
     if 'results_df' in st.session_state and st.session_state.results_df is not None:
         st.subheader("📊 Search Results")
-        
+
         # Copy DataFrame and check for 'Job Link'
         df = st.session_state.results_df.copy()
         if 'Job Link' in df.columns:
@@ -148,7 +191,13 @@ if st.session_state.search_triggered:
                 return f'<a href="{link}" target="_blank" style="color: #4a90e2; text-decoration: none;">🔗 View Posting</a>'
             
             df['Job Link'] = df['Job Link'].apply(make_clickable)
-        
+        # In results display
+        if 'Resume Match' in df.columns:
+            df['Resume Match'] = df['Resume Match'].map({
+                True: '✅ Match',
+                False: '❌ No Match'
+            })
+
 
         
         # Display DataFrame

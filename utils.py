@@ -1,5 +1,26 @@
 import requests
 from selectolax.parser import HTMLParser
+from PyPDF2 import PdfReader
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
+def extract_text_from_pdf(file):
+    """Extract text from uploaded PDF file"""
+    try:
+        pdf = PdfReader(file)
+        text = ""
+        for page in pdf.pages:
+            text += page.extract_text()
+        return text
+    except Exception as e:
+        print(f"Error reading PDF: {e}")
+        return None
+
+def get_embeddings(text):
+    """Generate embeddings using sentence transformer"""
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+    return model.encode(text, convert_to_tensor=False)
+
 def get_html(url):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
