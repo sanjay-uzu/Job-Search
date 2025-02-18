@@ -12,6 +12,74 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 
+
+import subprocess
+import tempfile
+import os
+import aspose.pdf as ap
+import tempfile
+import uuid
+import subprocess
+import os
+
+def latex_to_pdf(latex_code, output_pdf="output.pdf"):
+    """
+    Converts full LaTeX code into a PDF using pdflatex.
+    """
+    tex_filename = "temp_latex.tex"
+
+    # Step 1: Write LaTeX code to a .tex file
+    with open(tex_filename, "w", encoding="utf-8") as f:
+        f.write(latex_code)
+
+    # Step 2: Compile LaTeX using pdflatex
+    try:
+        subprocess.run([r"C:\Users\sanja\AppData\Local\Programs\MiKTeX\miktex\bin\x64\pdflatex.exe", "-interaction=nonstopmode", tex_filename], check=True)
+        print("PDF generated successfully.")
+
+        # Rename and move the output PDF
+        generated_pdf = tex_filename.replace(".tex", ".pdf")
+        os.rename(generated_pdf, output_pdf)
+        print(f"PDF saved as: {output_pdf}")
+
+    except subprocess.CalledProcessError as e:
+        print("Error compiling LaTeX:", e)
+
+    # Step 3: Clean up auxiliary files
+    for ext in [".aux", ".log", ".out"]:
+        aux_file = tex_filename.replace(".tex", ext)
+        if os.path.exists(aux_file):
+            os.remove(aux_file)
+
+    # Remove the temporary .tex file
+    os.remove(tex_filename)
+
+
+# Add new prompt template
+resume_prompt = ChatPromptTemplate.from_messages([
+    ("system", """Tailor this resume to match the job description.
+     Modification strength: {strength}/1.0
+     Keep LaTeX formatting intact.
+     Return ONLY the modified LaTeX code."""),
+    ("human", "Job Description:\n{job_desc}\n\nResume:\n{resume}")
+])
+
+def customize_resume(job_desc, resume_text, strength):
+    """Process resume customization with LLM"""
+    chain = LLMChain(
+        llm=ChatOpenAI(temperature=0.7, model="gpt-4"),
+        prompt=resume_prompt
+    )
+    
+    response = chain.invoke({
+        "job_desc": job_desc[:15000],
+        "resume": resume_text[:15000],
+        "strength": strength
+    })
+    
+    return response["text"].strip("``````").strip()
+
+
 # Initialize embeddings
 embeddings = OpenAIEmbeddings()
 

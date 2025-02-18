@@ -17,6 +17,12 @@ st.markdown("""
         padding: 1rem;
         border-radius: 0.5rem;
         background: #f8f9fa;
+    }   
+    .resume-box {
+        border: 2px solid #4a90e2;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
     }
     .stTags {
         background: white;
@@ -56,10 +62,13 @@ if 'questions' not in st.session_state:
     st.session_state.questions = []
 
 
+
 # ========== SIDEBAR ==========
 with st.sidebar:
     st.header("⚙️ Navigation")
-    
+    # In sidebar section
+    if st.button("🛠️ Resume Customizer", use_container_width=True):
+        st.session_state.page = 'customizer'
     if st.button("🏠 Main Page", use_container_width=True):
         st.session_state.page = 'main'
     if st.button("❓ Questions Manager", use_container_width=True):
@@ -177,7 +186,50 @@ if st.session_state.page == 'main':
                         st.session_state.results_df = None
             else:
                 st.warning("⚠️ Please enter at least one job role")
-    
+elif st.session_state.page == 'customizer':
+    st.title("📝 Resume Customizer")
+    modified_resume=False
+    with st.form("resume_customizer"):
+        job_link = st.text_input("Job Posting URL")
+        resume_content = st.text_area("LaTeX Resume Code", height=300)
+        modification_strength = st.slider("Modification Strength", 0.0, 1.0, 0.5)
+        submitted=False
+        if st.form_submit_button("✨ Customize Resume"):
+            with st.spinner("Tailoring resume..."):
+                try:
+                    submitted=True
+                    # Get job description
+                    job_desc = get_content(job_link)
+                    
+                    # Call LLM customization
+                    modified_resume = customize_resume(
+                        job_desc, 
+                        resume_content,
+                        modification_strength
+                    )
+                    
+                    st.subheader("Customized Resume")
+                    st.code(modified_resume, language="latex")
+                    # Generate PDF immediately after submission
+                    with st.spinner("Generating PDF..."):
+                        try:
+                            pdf_bytes = latex_to_pdf(modified_resume)
+                            st.session_state.pdf_bytes = pdf_bytes  # Store in session state
+                        except Exception as e:
+                            st.error(f"PDF generation failed: {str(e)}")
+                    # Download button OUTSIDE the form
+                except Exception as e:
+                    st.error(f"Error processing request: {str(e)}")
+            
+
+        if st.session_state.get("pdf_bytes"):
+            st.download_button(
+                label="💾 Download PDF Resume",
+                data=st.session_state.pdf_bytes,
+                file_name="custom_resume.pdf",
+                mime="application/pdf"
+            )
+
 # Display results
 if st.session_state.search_triggered:
     if 'results_df' in st.session_state and st.session_state.results_df is not None:
