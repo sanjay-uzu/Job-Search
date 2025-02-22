@@ -182,11 +182,9 @@ if st.session_state.page == 'main':
                                             })
                                             row['Match'] = "True" if "yes" in response['answer'].lower() else "False"
                                         else: 
-                                            response = llm.generate_content([
-                                            {"role": "system", "content": "Does this resume match the job description? Reply only with yes or no"},
-                                            {"role": "user", "content": f"Resume: {st.session_state.resume_text}\n\nJob Description: {result['raw_content']}"}
-                                        ])
-                                            row['Match'] = "True" if "yes" in response['answer'].lower() else "False"
+                                            response = llm.generate_content(f"Does this resume match the job description? Reply only with yes or no Resume: {st.session_state.resume_text}\n\nJob Description: {result['raw_content']}"
+                                        )
+                                            row['Match'] = "True" if "yes" in response.text.lower() else "False"
 
                             
                             for i, answer in enumerate(result['answers']):

@@ -116,10 +116,7 @@ def shorten_question(question_text):
             response = chain.run({"question": question_text})
             return response.strip().strip('"').title()
         else:
-            response = llm.generate_content([
-                {"role": "system", "content": "Convert this question into a 2-4 word column header."},
-                {"role": "user", "content": question_text}
-            ])
+            response = llm.generate_content(f"Convert this question into a 2-4 word column header.{question_text}")
             return response.text.strip()
     except Exception as e:
         print(f"Error shortening question: {e}")
@@ -155,7 +152,7 @@ def process_jobs(query, max_results):
             
             if USE_OPENAI:
                 chain = LLMChain(llm=llm, prompt=ChatPromptTemplate.from_messages([
-                    ("system", "Answer the following questions based on the job description. Provide answers in the format: Q1: [answer]\nQ2: [answer] ..."),
+                    ("system", "Answer the following questions based on the job description. Provide answers in the format: Q1: [answer]\nQ2: [answer] ... If no info on the question is found , reply with 'No Info Found' "),
                     ("human", f"Job Description: {content[:15000]}\nQuestions:\n{formatted_questions}")
                 ]))
                 response = chain.invoke({})
