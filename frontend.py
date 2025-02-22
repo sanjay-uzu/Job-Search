@@ -61,6 +61,8 @@ if 'search_triggered' not in st.session_state:
 if 'questions' not in st.session_state:
     st.session_state.questions = []
 
+st.session_state.resume_vectorstore=None
+st.session_state.resume_text=None
 
 
 # ========== SIDEBAR ==========
@@ -110,9 +112,9 @@ with st.sidebar:
         # Resume upload section
         if resume_file:
             with st.spinner("Processing resume..."):
-                resume_text = extract_text_from_pdf(resume_file)
-                if resume_text:
-                    st.session_state.resume_vectorstore = create_resume_vectorstore(resume_text)
+                st.session_state.resume_text = extract_text_from_pdf(resume_file)
+                if st.session_state.resume_text:
+                    st.session_state.resume_vectorstore = create_resume_vectorstore(st.session_state.resume_text)
                     st.success("Resume processed successfully!")
                     
 if 'results_df' in st.session_state and st.session_state.results_df is not None:
@@ -159,24 +161,33 @@ if st.session_state.page == 'main':
                         
                         # Apply filters
                         filtered_results = apply_filters(raw_results, st.session_state.questions)
+                        print(filtered_results)
                         query_results.extend(filtered_results)
                     
                     # Results processing
                     if query_results:
                         job_descriptions = [job['raw_content'] for job in query_results]
                         jobs_vectorstore = create_jobs_vectorstore(job_descriptions)
-                        
-                        conversation_chain = get_conversation_chain(jobs_vectorstore)
+                        if st.session_state.resume_vectorstore is not None:
+                            conversation_chain = get_conversation_chain(st.session_state.resume_vectorstore)
                         results = []
                         for result in query_results:
                             row = {'Job Link': result['link']}
                             
                             # Add resume match column if resume exists
-                            if 'resume_vectorstore' in st.session_state:
-                                        response = conversation_chain({
-                                            'question': f"Does this resume match the job: {result['raw_content']}?"
-                                        })
-                                        row['Match'] = "True" if "yes" in response['answer'].lower() else "False"
+                            if st.session_state.resume_text is not None:
+                                        if USE_OPENAI:
+                                            response = conversation_chain({
+                                                'question': f"Does this resume match the job: {result['raw_content']} Reply only with yes or no?"
+                                            })
+                                            row['Match'] = "True" if "yes" in response['answer'].lower() else "False"
+                                        else: 
+                                            response = llm.generate_content([
+                                            {"role": "system", "content": "Does this resume match the job description? Reply only with yes or no"},
+                                            {"role": "user", "content": f"Resume: {st.session_state.resume_text}\n\nJob Description: {result['raw_content']}"}
+                                        ])
+                                            row['Match'] = "True" if "yes" in response['answer'].lower() else "False"
+
                             
                             for i, answer in enumerate(result['answers']):
                                 row[column_headers[i]] = answer
