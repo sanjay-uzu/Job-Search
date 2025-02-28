@@ -3,7 +3,7 @@ import json
 import subprocess
 from dotenv import load_dotenv
 from pathlib import Path
-
+import re
 # Import Gemini API
 import google.generativeai as genai
 
@@ -78,11 +78,8 @@ def customize_resume(job_desc, resume_text, strength):
         })
         return response["text"].strip()
     else:
-        response = llm.generate_content([
-            {"role": "system", "content": "Tailor this resume to match the job description."},
-            {"role": "user", "content": f"Job Description:\n{job_desc}\n\nResume:\n{resume_text}"}
-        ])
-        return response.text.strip()
+        response = llm.generate_content(f"Tailor this resume to match the job description. \n Job Description:\n{job_desc}\n\nResume:\n{resume_text}\n Modification Strength:{strength} \n Return only the latex code.")
+        return re.sub('```latex', '', response.text.strip())
 
 # Vector Store Creation
 def create_resume_vectorstore(resume_text):
