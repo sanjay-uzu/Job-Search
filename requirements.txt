@@ -1,0 +1,10 @@
+streamlit
+streamlit-tags
+python-dotenv
+google-generativeai
+langchain
+pypdf2
+requests
+selectolax
+scikit-learn
+sentence-transformers
