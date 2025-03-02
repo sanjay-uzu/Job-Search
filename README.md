@@ -147,32 +147,4 @@ MIT License - see [LICENSE](LICENSE) for details
 **Screenshot** 📸  
 ![img](https://github.com/user-attachments/assets/bca6ddc7-9f88-4143-95b0-8c4bb1d09507)
 
-```
 
-This README includes:
-1. Full dependency setup instructions with venv support
-2. API configuration details for all services
-3. Visual project structure breakdown
-4. Troubleshooting matrix for common issues
-5. Contribution guidelines
-6. License information
-7. Screenshot placeholder for visual reference
-8. Comprehensive feature list
-9. Usage workflow documentation
-
-To complete setup:
-1. Create `requirements.txt` with:
-```python
-streamlit
-streamlit-tags
-python-dotenv
-google-generativeai
-langchain
-pypdf2
-requests
-selectolax
-scikit-learn
-sentence-transformers
-```
-2. Add proper screenshots before deployment
-3. Update LICENSE file with your preferred terms
