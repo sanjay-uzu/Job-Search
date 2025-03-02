@@ -1,23 +1,38 @@
 [
   {
+    "text": "What is the company names?",
+    "type": "categorical",
+    "filter": null,
+    "shortened": "**Company Names**"
+  },
+  {
     "text": "What is Job Title?",
     "type": "categorical",
     "filter": null,
     "shortened": "**Job Title**"
   },
   {
-    "text": "What is the job role?",
-    "type": "categorical",
-    "filter": null,
-    "shortened": "*   **Job Role**"
-  },
-  {
-    "text": "What is the salary range?",
+    "text": "What is the salary range in USD?",
     "type": "numeric",
     "filter": {
       "operator": "None",
       "value": 0
     },
-    "shortened": "**Salary Range**"
+    "shortened": "**Salary (USD)**"
+  },
+  {
+    "text": "Does this job require hardware expertise?",
+    "type": "categorical",
+    "filter": null,
+    "shortened": "**Hardware Expertise?**"
+  },
+  {
+    "text": "Is this an entry level or junior position?",
+    "type": "numeric",
+    "filter": {
+      "operator": "None",
+      "value": 0
+    },
+    "shortened": "**Entry Level?**"
   }
 ]
